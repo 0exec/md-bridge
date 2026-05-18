@@ -7,13 +7,19 @@ test('Language toggle switches the whole UI between EN and PT', async ({ page })
   await page.evaluate(() => window.localStorage.setItem('md-bridge:locale', 'en'))
   await page.reload()
 
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/honest conversions/i)
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    /convert pdf and markdown locally/i,
+  )
 
   // Flip to PT via the header button.
   await page.getByRole('button', { name: /portugu/i }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/conversões honestas/i)
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    /converta pdf e markdown local/i,
+  )
 
   // The choice survives a reload (localStorage is the source of truth).
   await page.reload()
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/conversões honestas/i)
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    /converta pdf e markdown local/i,
+  )
 })
