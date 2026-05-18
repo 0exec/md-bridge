@@ -13,7 +13,7 @@ from pathlib import Path
 import fitz
 
 from app.schemas.convert import FontUsage, InspectPdfResponse
-from app.services.skills_loader import pdf_inspect_module
+from app.services.packages_loader import pdf_inspect_module
 
 
 def inspect_pdf_bytes(pdf_bytes: bytes, filename: str) -> InspectPdfResponse:

@@ -1,7 +1,7 @@
 """Pure-function tests for the skills loader regex and caching behavior."""
 from __future__ import annotations
 
-from app.services.skills_loader import (
+from app.services.packages_loader import (
     _STDIO_REBIND_RE,
     md_to_pdf_module,
     pdf_inspect_module,

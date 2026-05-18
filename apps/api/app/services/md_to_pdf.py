@@ -13,7 +13,7 @@ from typing import Iterator
 from app.config import MD_TO_PDF_TEMPLATES
 from app.errors import ApiError
 from app.schemas.convert import MdToPdfOptions
-from app.services.skills_loader import md_to_pdf_module
+from app.services.packages_loader import md_to_pdf_module
 
 
 def _css_paths_for_theme(theme_id: str) -> list[Path]:

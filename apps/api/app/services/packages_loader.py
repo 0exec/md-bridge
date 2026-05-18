@@ -37,10 +37,10 @@ def _load(name: str, path: Path) -> ModuleType:
     host stdio.
     """
     if not path.exists():
-        raise FileNotFoundError(f"Skill script not found: {path}")
+        raise FileNotFoundError(f"Package script not found: {path}")
     source = path.read_text(encoding="utf-8")
     safe_source = _STDIO_REBIND_RE.sub(
-        lambda m: "# [stripped by skills_loader] " + m.group(0), source
+        lambda m: "# [stripped by packages_loader] " + m.group(0), source
     )
     code = compile(safe_source, str(path), "exec")
     spec = importlib.util.spec_from_loader(name, loader=None, origin=str(path))
@@ -55,14 +55,14 @@ def _load(name: str, path: Path) -> ModuleType:
 
 @lru_cache(maxsize=1)
 def pdf_to_md_module() -> ModuleType:
-    return _load("md_bridge_skill_pdf_to_md", PDF_TO_MD_SCRIPT)
+    return _load("md_bridge_pkg_pdf_to_md", PDF_TO_MD_SCRIPT)
 
 
 @lru_cache(maxsize=1)
 def md_to_pdf_module() -> ModuleType:
-    return _load("md_bridge_skill_md_to_pdf", MD_TO_PDF_SCRIPT)
+    return _load("md_bridge_pkg_md_to_pdf", MD_TO_PDF_SCRIPT)
 
 
 @lru_cache(maxsize=1)
 def pdf_inspect_module() -> ModuleType:
-    return _load("md_bridge_skill_pdf_inspect", PDF_INSPECT_SCRIPT)
+    return _load("md_bridge_pkg_pdf_inspect", PDF_INSPECT_SCRIPT)

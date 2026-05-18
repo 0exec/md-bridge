@@ -18,7 +18,7 @@ from app.schemas.convert import (
     PdfToMdOptions,
     PdfToMdResponse,
 )
-from app.services.skills_loader import pdf_to_md_module
+from app.services.packages_loader import pdf_to_md_module
 
 
 FRONT_MATTER_LINE = re.compile(r'^(\w[\w-]*):\s*(.*)$')

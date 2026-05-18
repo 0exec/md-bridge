@@ -1,7 +1,7 @@
 """Shared fixtures for the conversion-layer regression suite.
 
-Imports the skill scripts in `packages/` via the loader from
-`apps/api/app/services/skills_loader.py`. The same venv used for the API
+Loads the converter scripts under `packages/` through
+`apps/api/app/services/packages_loader.py`. The same venv used for the API
 (`apps/api/.venv`) hosts all dependencies.
 """
 from __future__ import annotations
@@ -56,13 +56,13 @@ def istqb_pdf() -> Path:
 
 @pytest.fixture(scope="session")
 def pdf_to_md_mod():
-    from app.services.skills_loader import pdf_to_md_module
+    from app.services.packages_loader import pdf_to_md_module
 
     return pdf_to_md_module()
 
 
 @pytest.fixture(scope="session")
 def md_to_pdf_mod():
-    from app.services.skills_loader import md_to_pdf_module
+    from app.services.packages_loader import md_to_pdf_module
 
     return md_to_pdf_module()
