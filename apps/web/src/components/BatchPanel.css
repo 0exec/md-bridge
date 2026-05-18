@@ -1,0 +1,138 @@
+.batch {
+  border: 1px solid var(--c-rule);
+  border-radius: var(--r-md);
+  background: var(--c-bg-elev);
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.batch__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--c-rule);
+  padding-bottom: var(--s-2);
+}
+
+.batch__progress {
+  color: var(--c-ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.batch__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.batch__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--c-rule);
+  border-radius: var(--r-sm);
+  background: var(--c-bg);
+  transition: border-color var(--t-fast) var(--easing);
+}
+
+.batch__row.is-selected {
+  border-color: var(--c-accent);
+}
+
+.batch__row--converting {
+  background: var(--c-accent-soft);
+}
+
+.batch__row--done {
+  border-color: var(--c-ok);
+}
+
+.batch__row--error {
+  border-color: var(--c-accent);
+}
+
+.batch__file {
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.batch__name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.batch__size {
+  font-size: 0.7rem;
+  color: var(--c-ink-soft);
+}
+
+.batch__status {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.batch__status--queued {
+  color: var(--c-ink-soft);
+}
+
+.batch__status--converting {
+  color: var(--c-accent);
+}
+
+.batch__status--done {
+  color: var(--c-ok);
+}
+
+.batch__status--error {
+  color: var(--c-accent);
+}
+
+.batch__actions {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.batch__error {
+  grid-column: 1 / -1;
+  margin: var(--s-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--c-accent);
+}
+
+.batch__foot {
+  display: flex;
+  gap: var(--s-3);
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--c-rule);
+  padding-top: var(--s-3);
+}
+
+.batch__hint {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-soft);
+  margin-left: auto;
+}

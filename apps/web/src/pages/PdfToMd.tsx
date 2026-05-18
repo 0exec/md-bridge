@@ -1,47 +1,66 @@
 import { useEffect, useState } from 'react'
-import { Button } from '../components/Button'
-import { ConvertButton } from '../components/ConvertButton'
-import { DiagnosticPanel } from '../components/DiagnosticPanel'
+import { BatchPanel } from '../components/BatchPanel'
 import { DropZone } from '../components/DropZone'
 import { MarkdownPreview } from '../components/MarkdownPreview'
 import { Toast } from '../components/Toast'
-import { usePdfToMd } from '../hooks/useConvert'
+import { useBatchConvert, type BatchItem } from '../hooks/useBatchConvert'
 import { useInspect } from '../hooks/useInspect'
 import { useTranslation } from '../i18n'
+import { convertPdfToMd, type PdfToMdResponse } from '../lib/api'
+import { DiagnosticPanel } from '../components/DiagnosticPanel'
+
+function downloadText(filename: string, text: string) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
 
 export function PdfToMd() {
   const { t } = useTranslation()
-  const [file, setFile] = useState<File | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ kind: 'ok' | 'warn'; message: string } | null>(null)
+
+  const batch = useBatchConvert<PdfToMdResponse>({
+    convert: (file, signal) => convertPdfToMd(file, {}, signal),
+  })
   const inspect = useInspect()
-  const convert = usePdfToMd()
 
+  // Auto-select the most recently finished item so the preview follows the run.
   useEffect(() => {
-    if (!file) {
-      inspect.reset()
-      convert.reset()
-      return
-    }
-    void inspect.run(file)
-  }, [file]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (selectedId && batch.items.some((it) => it.id === selectedId)) return
+    const lastDone = [...batch.items].reverse().find((it) => it.status === 'done')
+    if (lastDone) setSelectedId(lastDone.id)
+  }, [batch.items, selectedId])
 
-  const onConvert = async () => {
-    if (!file) return
-    const res = await convert.run(file)
-    if (res) setToast({ kind: 'ok', message: t.pdfToMd.success })
+  // Run inspect on the first file so the diagnostic panel still has something
+  // to show (helps the user judge if OCR is needed before kicking off the run).
+  const firstName = batch.items[0]?.file.name
+  useEffect(() => {
+    const first = batch.items[0]?.file
+    if (first) void inspect.run(first)
+    else inspect.reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstName])
+
+  const selected = batch.items.find((it) => it.id === selectedId) ?? null
+
+  const handleFiles = (files: File[]) => batch.add(files)
+
+  const onConvertAll = async () => {
+    await batch.runAll()
+    setToast({ kind: 'ok', message: t.pdfToMd.success })
   }
 
-  const onDownload = () => {
-    if (!convert.result) return
-    const blob = new Blob([convert.result.md], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = (file?.name ?? 'document.pdf').replace(/\.pdf$/i, '.md')
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+  const onDownload = (item: BatchItem<PdfToMdResponse>) => {
+    if (!item.result) return
+    const out = item.file.name.replace(/\.pdf$/i, '.md')
+    downloadText(out, item.result.md)
   }
 
   return (
@@ -56,48 +75,36 @@ export function PdfToMd() {
           <DropZone
             accept=".pdf,application/pdf"
             acceptLabel="PDF"
-            onFile={setFile}
-            file={file}
-            disabled={convert.status === 'loading'}
+            onFiles={handleFiles}
+            multiple
+            disabled={batch.running}
           />
           <DiagnosticPanel
             data={inspect.data}
             loading={inspect.status === 'loading'}
             error={inspect.status === 'error' ? inspect.error?.message : null}
           />
-          <div className="stack__actions">
-            <ConvertButton
-              status={convert.status}
-              onClick={onConvert}
-              disabled={!file}
-              labels={{
-                idle: t.pdfToMd.convert,
-                loading: t.pdfToMd.converting,
-                success: t.pdfToMd.ready,
-                error: t.pdfToMd.convert,
-              }}
-            />
-            {convert.result && (
-              <Button variant="ghost" onClick={onDownload}>
-                {t.pdfToMd.download}
-              </Button>
-            )}
-          </div>
-          {convert.error && (
-            <p role="alert" className="error">
-              {convert.error.message}
-            </p>
-          )}
+          <BatchPanel
+            items={batch.items}
+            running={batch.running}
+            onConvertAll={onConvertAll}
+            onClear={batch.clear}
+            onRemove={batch.remove}
+            onDownload={onDownload}
+            onSelect={(it) => setSelectedId(it.id)}
+            selectedId={selectedId}
+            downloadLabel={t.pdfToMd.download}
+          />
         </div>
 
         <div>
           <MarkdownPreview
-            markdown={convert.result?.md ?? ''}
+            markdown={selected?.result?.md ?? ''}
             empty={t.pdfToMd.previewEmpty}
           />
-          {convert.result?.warnings.length ? (
+          {selected?.result?.warnings.length ? (
             <ul className="warnings" aria-label={t.pdfToMd.warnings}>
-              {convert.result.warnings.map((w, i) => (
+              {selected.result.warnings.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}
             </ul>

@@ -21,7 +21,7 @@ test('Generated PDF preview uses the default theme', async ({ page }) => {
   await page
     .getByLabel(/pasted markdown/i)
     .fill('---\ntitle: "Themed"\n---\n\n# Title\n\nparagraph')
-  await page.getByRole('button', { name: /generate pdf/i }).click()
+  await page.getByRole('button', { name: /^convert$/i }).click()
 
   const iframe = page.locator('iframe.pdf-preview')
   await expect(iframe).toBeVisible({ timeout: 60_000 })

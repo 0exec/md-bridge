@@ -12,7 +12,7 @@ together, and a small React app drives the whole thing from the browser.
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![Node 20+](https://img.shields.io/badge/node-20%2B-43853d.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-133%20total-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-135%20total-brightgreen.svg)](#testing)
 
 ![Home page screenshot](docs/screenshots/home-en.png)
 
@@ -42,6 +42,8 @@ together, and a small React app drives the whole thing from the browser.
 - **Markdown to PDF** rendered through headless Chromium (Playwright) with
   swappable CSS themes. Drop a `.css` into `packages/markdown-to-pdf/templates/`
   and it appears in the UI.
+- **Batch mode**: drop one file or a whole folder. The UI lists every file,
+  converts them in sequence, and lets you download each result as it lands.
 - **`/api/inspect-pdf`** returns diagnostics (fonts, sizes, tagged-PDF flag,
   OCR hint) so the UI can warn before conversion.
 - **No persistence**, no third-party calls. Every request runs in a
@@ -165,27 +167,29 @@ apps/api/.venv/Scripts/python.exe -m uvicorn app.main:app --port 8000 --app-dir 
 
 ## Testing
 
-The test suite follows a classic pyramid with 133 tests in total:
+The test suite follows a classic pyramid with 135 tests in total. No mocks
+of the API, fetch, or browser primitives: integration runs against the real
+FastAPI TestClient and E2E drives a real Chromium against a real backend.
 
 | Tier        | Count | What it covers                                                   |
 | ----------- | ----- | ---------------------------------------------------------------- |
-| Unit        | 90    | 51 backend (services, schemas, helpers) + 39 frontend (components, hooks, i18n) |
-| Integration | 36    | 15 backend with FastAPI TestClient + 7 regression goldens + 14 frontend page tests (Home, About, Navigation) |
-| E2E         | 7     | Playwright real-browser specs: pdf-to-md, md-to-pdf, ISTQB fixture, theme switching, language toggle |
+| Unit        | 87    | 47 backend (schemas, helpers, errors, heuristics) + 40 frontend (components, hooks, i18n) |
+| Integration | 40    | 17 backend with FastAPI TestClient + 8 regression goldens + 15 frontend page tests (Home, About, Navigation, batch panel) |
+| E2E         | 8     | Playwright real-browser specs: ISTQB conversion, md-to-pdf, themes, language toggle, batch with two files |
 
 Run them with:
 
 ```bash
-npm run test:unit                   # 51 backend + 39 frontend = 90 unit tests
+npm run test:unit                   # 47 backend + 40 frontend = 87 unit tests
 npm run test:unit:api               # backend unit (pytest, apps/api/tests/unit)
 npm run test:unit:web               # frontend unit (Vitest)
 
-npm run test:integration            # backend + regression goldens + frontend pages = 36
+npm run test:integration            # backend + regression goldens + frontend pages = 40
 npm run test:integration:api        # FastAPI TestClient (apps/api/tests/integration)
-npm run test:integration:regression # 7 golden-file regressions (tests/regression)
-npm run test:integration:web        # frontend page tests (Home, About, Navigation)
+npm run test:integration:regression # 8 golden-file regressions (tests/regression)
+npm run test:integration:web        # frontend page tests (Home, About, Navigation, batch)
 
-npm run test:e2e                    # 7 Playwright real-browser specs
+npm run test:e2e                    # 8 Playwright real-browser specs
 
 npm run test:all                    # everything in sequence
 ```
@@ -235,10 +239,12 @@ curl -X POST http://localhost:8000/api/md-to-pdf \
 |---|---|
 | **Home page** (English) | **Home page** (Portuguese) |
 | ![Home EN](docs/screenshots/home-en.png) | ![Home PT](docs/screenshots/home-pt.png) |
-| **PDF to Markdown** flow | **Markdown to PDF** flow |
-| ![PDF to MD](docs/screenshots/pdf-to-md.png) | ![MD to PDF](docs/screenshots/md-to-pdf.png) |
-| **About page** | **Swagger UI** at `/docs` |
-| ![About](docs/screenshots/about.png) | ![Swagger](docs/screenshots/swagger.png) |
+| **PDF to Markdown** (idle) | **Batch mode** — two PDFs queued |
+| ![PDF to MD](docs/screenshots/pdf-to-md.png) | ![Batch](docs/screenshots/pdf-to-md-batch.png) |
+| **Markdown to PDF** flow | **About page** |
+| ![MD to PDF](docs/screenshots/md-to-pdf.png) | ![About](docs/screenshots/about.png) |
+| **Swagger UI** at `/docs` | |
+| ![Swagger](docs/screenshots/swagger.png) | |
 
 ## Internationalization
 
@@ -263,7 +269,7 @@ layered first, so a custom theme only has to override what it cares about.
 
 ## Limits
 
-- 50 MB cap per upload
+- 500 MB cap per upload
 - 60 s timeout per conversion
 - No OCR yet: scanned PDFs need Tesseract before being submitted
 - Tables with merged cells can be flattened by the heuristic extractor

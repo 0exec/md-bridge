@@ -13,7 +13,7 @@ MD_TO_PDF_SCRIPT = PACKAGES_DIR / "markdown-to-pdf" / "scripts" / "convert.py"
 MD_TO_PDF_TEMPLATES = PACKAGES_DIR / "markdown-to-pdf" / "templates"
 
 # Upload limits and timeouts
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+MAX_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MB
 CONVERSION_TIMEOUT_SECONDS = 60
 
 # CORS origins for local dev. Vite default + alt port.

@@ -24,7 +24,7 @@ interactive playground, the running API serves Swagger UI at
   }
   ```
 
-- Hard limits: **50 MB per upload**, **60 s per conversion**, no persistence.
+- Hard limits: **500 MB per upload**, **60 s per conversion**, no persistence.
 
 ---
 
@@ -55,7 +55,7 @@ Convert a PDF into structured Markdown using deterministic heuristics.
 
 | field      | required | type   | description                                                  |
 | ---------- | -------- | ------ | ------------------------------------------------------------ |
-| `file`     | yes      | file   | A `.pdf` file (up to 50 MB).                                 |
+| `file`     | yes      | file   | A `.pdf` file (up to 500 MB).                                 |
 | `options`  | no       | string | JSON string. See below.                                      |
 
 ### `options` shape
@@ -118,7 +118,7 @@ extraction was requested but cannot round-trip through the HTTP layer.
 | status | code              | when                                              |
 | ------ | ----------------- | ------------------------------------------------- |
 | 400    | `wrong_file_type` | uploaded file does not end in `.pdf`              |
-| 413    | `payload_too_large` | upload > 50 MB                                   |
+| 413    | `payload_too_large` | upload > 500 MB                                   |
 | 422    | `invalid_options` | the `options` JSON is malformed or fails schema   |
 
 ---
@@ -131,7 +131,7 @@ Render Markdown into a PDF through headless Chromium.
 
 | field      | required | type   | description                                                  |
 | ---------- | -------- | ------ | ------------------------------------------------------------ |
-| `file`     | yes      | file   | A UTF-8 `.md` file (up to 50 MB).                            |
+| `file`     | yes      | file   | A UTF-8 `.md` file (up to 500 MB).                            |
 | `options`  | no       | string | JSON string. See below.                                      |
 
 ### `options` shape
@@ -187,7 +187,7 @@ Read-only diagnostics about a PDF, useful as a pre-flight before converting.
 
 | field   | required | type | description                  |
 | ------- | -------- | ---- | ---------------------------- |
-| `file`  | yes      | file | A `.pdf` file (up to 50 MB). |
+| `file`  | yes      | file | A `.pdf` file (up to 500 MB). |
 
 ### Example
 

@@ -29,7 +29,7 @@ test('ISTQB syllabus converts to Markdown end-to-end', async ({ page }) => {
   // ISTQB CTAL-TA is a multi-page document; the page count must reflect that.
   await expect(page.locator('.diag__grid')).toContainText(/[1-9][0-9]+/)
 
-  await page.getByRole('button', { name: /^convert$/i }).click()
+  await page.getByRole('button', { name: /convert all/i }).click()
 
   // The markdown preview shows a real heading extracted from the syllabus.
   await expect(

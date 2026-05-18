@@ -34,7 +34,7 @@ PyMuPDF's table finder.
 
 | field | required | description |
 |---|---|---|
-| `file` | yes | A `.pdf` file (max 50 MB). |
+| `file` | yes | A `.pdf` file (max 500 MB). |
 | `options` | no | JSON string with the keys below. |
 
 ```json
@@ -76,7 +76,7 @@ The chosen `theme` resolves to a CSS file in
 
 | field | required | description |
 |---|---|---|
-| `file` | yes | A `.md` file (max 50 MB), UTF-8. |
+| `file` | yes | A `.md` file (max 500 MB), UTF-8. |
 | `options` | no | JSON: `{ "theme": "default", "lang": "en" }`. |
 
 ### Response
@@ -178,13 +178,13 @@ async def _read_upload(upload: UploadFile, expected_suffix: str, expected_label:
             },
         },
         413: {
-            "description": "Upload exceeds the 50 MB cap.",
+            "description": "Upload exceeds the 500 MB cap.",
             "content": {
                 "application/json": {
                     "example": {
                         "error": {
                             "code": "payload_too_large",
-                            "message": "Upload exceeds 50 MB limit.",
+                            "message": "Upload exceeds 500 MB limit.",
                         }
                     }
                 }
@@ -270,7 +270,7 @@ async def pdf_to_md(
                 }
             },
         },
-        413: {"description": "Upload exceeds the 50 MB cap."},
+        413: {"description": "Upload exceeds the 500 MB cap."},
         422: {"description": "Malformed `options` payload."},
         500: {"description": "Renderer failed (Chromium crashed, missing template, etc)."},
     },

@@ -42,8 +42,10 @@ def test_pdf_to_md_rejects_invalid_options(client, small_pdf: Path):
 
 
 def test_pdf_to_md_rejects_oversize(client):
-    # Send a real payload above the 50 MB cap so the route returns 413 the
-    # same way it would in production. No patching of internal constants.
+    # Real payload above the 500 MB cap so the route returns 413 the same way
+    # it would in production. No patching of internal constants. The test is
+    # slow on purpose: short of patching the constant, this is the only way
+    # to drive the actual limit check inside `_read_upload`.
     from app.config import MAX_UPLOAD_BYTES
 
     payload = b"%PDF-1.4\n" + b"0" * (MAX_UPLOAD_BYTES + 1)

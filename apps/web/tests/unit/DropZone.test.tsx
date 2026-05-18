@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DropZone } from '../../src/components/DropZone'
 import { I18nProvider } from '../../src/i18n'
@@ -12,45 +12,50 @@ function renderWithI18n(ui: React.ReactNode) {
 }
 
 describe('DropZone', () => {
-  it('triggers onFile when a matching file is dropped', () => {
-    const onFile = vi.fn()
-    renderWithI18n(<DropZone accept=".pdf,application/pdf" acceptLabel="PDF" onFile={onFile} />)
+  it('passes valid dropped files to onFiles', async () => {
+    const onFiles = vi.fn()
+    renderWithI18n(
+      <DropZone accept=".pdf,application/pdf" acceptLabel="PDF" onFiles={onFiles} />,
+    )
     const zone = screen.getByRole('button')
     const file = makeFile('doc.pdf', 'application/pdf')
-    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
-    expect(onFile).toHaveBeenCalledTimes(1)
-    expect(onFile.mock.calls[0][0].name).toBe('doc.pdf')
+    fireEvent.drop(zone, {
+      dataTransfer: { files: [file], items: [] as unknown as DataTransferItemList },
+    })
+    await waitFor(() => expect(onFiles).toHaveBeenCalledTimes(1))
+    expect(onFiles.mock.calls[0][0][0].name).toBe('doc.pdf')
   })
 
-  it('shows an error for an invalid mime', () => {
-    const onFile = vi.fn()
-    renderWithI18n(<DropZone accept=".pdf" acceptLabel="PDF" onFile={onFile} />)
+  it('shows an error when nothing matches the accept list', async () => {
+    const onFiles = vi.fn()
+    renderWithI18n(<DropZone accept=".pdf" acceptLabel="PDF" onFiles={onFiles} />)
     const zone = screen.getByRole('button')
     const file = makeFile('notes.txt', 'text/plain')
-    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
-    expect(onFile).not.toHaveBeenCalled()
-    expect(screen.getByRole('alert').textContent).toMatch(/invalid/i)
+    fireEvent.drop(zone, {
+      dataTransfer: { files: [file], items: [] as unknown as DataTransferItemList },
+    })
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/invalid/i))
+    expect(onFiles).not.toHaveBeenCalled()
   })
 
-  it('renders the file name when one is set', () => {
+  it('renders the folder hint when multiple is enabled', () => {
     renderWithI18n(
-      <DropZone
-        accept=".pdf"
-        acceptLabel="PDF"
-        onFile={() => undefined}
-        file={makeFile('report.pdf', 'application/pdf', 2048)}
-      />,
+      <DropZone accept=".md" acceptLabel="Markdown" onFiles={() => undefined} multiple />,
     )
-    expect(screen.getByText('report.pdf')).toBeInTheDocument()
-    expect(screen.getByText(/KB/)).toBeInTheDocument()
+    expect(screen.getByText(/drop markdown files or a folder/i)).toBeInTheDocument()
+  })
+
+  it('renders the single-file hint when multiple is off', () => {
+    renderWithI18n(<DropZone accept=".pdf" acceptLabel="PDF" onFiles={() => undefined} />)
+    expect(screen.getByText(/drop a pdf/i)).toBeInTheDocument()
   })
 
   it('is keyboard-activatable via Enter', () => {
-    const onFile = vi.fn()
-    renderWithI18n(<DropZone accept=".pdf" acceptLabel="PDF" onFile={onFile} />)
+    const onFiles = vi.fn()
+    renderWithI18n(<DropZone accept=".pdf" acceptLabel="PDF" onFiles={onFiles} />)
     const zone = screen.getByRole('button')
     zone.focus()
     fireEvent.keyDown(zone, { key: 'Enter' })
-    expect(onFile).not.toHaveBeenCalled()
+    expect(onFiles).not.toHaveBeenCalled()
   })
 })

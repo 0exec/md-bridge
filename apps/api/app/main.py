@@ -42,7 +42,7 @@ A walkthrough with `curl` examples lives in
 
 ## Limits
 
-- Upload cap: **50 MB** per request.
+- Upload cap: **500 MB** per request.
 - Per-request timeout: **60 seconds**.
 - No persistence: every file is processed in a temporary directory and removed
   before the response is returned.

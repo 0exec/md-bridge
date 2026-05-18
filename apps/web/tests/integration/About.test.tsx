@@ -20,7 +20,7 @@ describe('About page', () => {
     expect(screen.getByRole('heading', { level: 1, name: /about md-bridge/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: /how it works/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: /known limits/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /more details/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /built with/i })).toBeInTheDocument()
   })
 
   it('renders each known limit as a list item', () => {
@@ -29,7 +29,7 @@ describe('About page', () => {
     expect(items.length).toBeGreaterThanOrEqual(3)
     const text = items.map((li) => li.textContent ?? '').join(' | ')
     expect(text).toMatch(/ocr/i)
-    expect(text).toMatch(/merged cells/i)
+    expect(text).toMatch(/cells merged/i)
     expect(text).toMatch(/headers and footers/i)
   })
 

@@ -51,10 +51,26 @@ interface Dictionary {
   }
   dropzone: {
     dropFile: (label: string) => string
+    dropFiles: (label: string) => string
     orClick: string
+    orClickMany: string
     sizeHint: (size: string) => string
     invalidType: (label: string) => string
+    someInvalid: (count: number, label: string) => string
     ariaLabel: (label: string) => string
+  }
+  batch: {
+    heading: (count: number) => string
+    statusQueued: string
+    statusConverting: string
+    statusDone: string
+    statusError: string
+    progress: (done: number, total: number) => string
+    convertAll: string
+    downloadAll: string
+    clear: string
+    pdfBundleName: string
+    mdBundleName: string
   }
   diag: {
     title: string
@@ -121,47 +137,64 @@ const en: Dictionary = {
   },
   mdToPdf: {
     title: 'Markdown to PDF',
-    subtitle: 'Upload a .md file or paste text and generate a PDF with a CSS theme.',
+    subtitle: 'Upload a .md file or paste text and convert it to PDF with a CSS theme.',
     paste: 'Or paste markdown here...',
     pasteLabel: 'Pasted markdown',
-    generate: 'Generate PDF',
-    generating: 'Generating',
+    generate: 'Convert',
+    generating: 'Converting',
     download: 'Download .pdf',
-    previewEmpty: 'The preview will appear here after generation.',
+    previewEmpty: 'The preview will appear here after conversion.',
     pastedFilename: 'pasted.md',
-    success: 'PDF generated.',
+    success: 'PDF ready.',
   },
   about: {
     title: 'About md-bridge',
     intro:
-      'Local conversion tool between PDF and Markdown. Everything runs through hand-written heuristics in Python with PyMuPDF and headless Chromium. The conversion is deterministic and stays on the host: no uploads to external services.',
+      'md-bridge converts files between two formats: PDF (the standard for printing and sharing finished documents) and Markdown (a lightweight text format used by developers, writers, and tools like GitHub, Obsidian, and Notion). The whole thing runs on your machine, so files never leave your computer.',
     how: {
       title: 'How it works',
       p1:
-        'PyMuPDF inspects the PDF: font size, weight, position and the document outline drive heading detection. Lists, tables and paragraphs come from block geometry. The output ships with a YAML front matter carrying file metadata.',
+        'From PDF to Markdown: the app reads the font size and layout of the PDF to figure out what is a heading, what is a paragraph, what is a list, and what is a table. It then writes a clean Markdown file with that structure preserved.',
       p2:
-        'The reverse path renders Markdown to HTML, applies a CSS theme and prints to PDF through Chromium via Playwright.',
+        'From Markdown to PDF: the app converts the text into a styled web page and prints that page to PDF using the same engine browsers use. You can pick a visual theme before converting.',
     },
     limits: {
       title: 'Known limits',
       items: [
-        'No OCR in v1. Scanned PDFs need Tesseract first.',
-        'Complex tables with merged cells can be flattened.',
-        'Repeated headers and footers are heuristically dropped.',
+        'Scanned PDFs (images of paper, not real text) cannot be read yet. Run an OCR tool such as Tesseract on them first.',
+        'Tables with cells merged across rows or columns may come out flattened.',
+        'Headers and footers that repeat on every page are dropped automatically.',
       ],
     },
     more: {
-      title: 'More details',
+      title: 'Built with',
       body:
-        'See REFERENCE.md inside packages/pdf-to-markdown/ for the heuristic internals, and docs/API.md for the REST walkthrough.',
+        'Python and FastAPI on the server side (the part that does the actual conversion), React on the page you are looking at, and a headless Chromium browser to render Markdown back into PDF. Everything is open source and ships with the project.',
     },
   },
   dropzone: {
     dropFile: (label) => `Drop a ${label}`,
+    dropFiles: (label) => `Drop ${label} files or a folder`,
     orClick: 'or click to select',
+    orClickMany: 'or click to pick files',
     sizeHint: (size) => `${size} · click to change`,
     invalidType: (label) => `Invalid type. Expected ${label}.`,
+    someInvalid: (count, label) =>
+      `${count} file${count === 1 ? '' : 's'} ignored: not ${label}.`,
     ariaLabel: (label) => `Drop a ${label} file or click to choose`,
+  },
+  batch: {
+    heading: (count) => `${count} file${count === 1 ? '' : 's'} queued`,
+    statusQueued: 'Queued',
+    statusConverting: 'Converting',
+    statusDone: 'Done',
+    statusError: 'Error',
+    progress: (done, total) => `${done} of ${total} complete`,
+    convertAll: 'Convert all',
+    downloadAll: 'Download all (.zip)',
+    clear: 'Clear list',
+    pdfBundleName: 'pdfs.zip',
+    mdBundleName: 'markdown.zip',
   },
   diag: {
     title: 'PDF diagnostics',
@@ -229,47 +262,64 @@ const pt: Dictionary = {
   },
   mdToPdf: {
     title: 'Markdown para PDF',
-    subtitle: 'Suba um .md ou cole texto e gere um PDF com tema CSS.',
+    subtitle: 'Suba um .md ou cole texto e converta em PDF com tema CSS.',
     paste: 'Ou cole markdown aqui...',
     pasteLabel: 'Markdown colado',
-    generate: 'Gerar PDF',
-    generating: 'Gerando',
+    generate: 'Converter',
+    generating: 'Convertendo',
     download: 'Baixar .pdf',
-    previewEmpty: 'O preview aparece aqui depois da geração.',
+    previewEmpty: 'O preview aparece aqui depois da conversão.',
     pastedFilename: 'colado.md',
-    success: 'PDF gerado.',
+    success: 'PDF pronto.',
   },
   about: {
     title: 'Sobre o md-bridge',
     intro:
-      'Ferramenta local de conversão entre PDF e Markdown. Toda a lógica é heurística, escrita em Python com PyMuPDF e Chromium headless. A conversão é determinística e roda no seu host: nenhum upload para serviços externos.',
+      'O md-bridge converte arquivos entre dois formatos: PDF (o padrão para imprimir e compartilhar documentos prontos) e Markdown (um formato de texto leve usado por desenvolvedores, escritores e ferramentas como GitHub, Obsidian e Notion). Tudo roda na sua máquina, então os arquivos nunca saem do seu computador.',
     how: {
       title: 'Como funciona',
       p1:
-        'O PyMuPDF analisa o PDF: tamanho de fonte, peso, posição e o índice nativo guiam a detecção de títulos. Listas, tabelas e parágrafos vêm da geometria dos blocos. A saída traz um front matter YAML com metadados do arquivo.',
+        'De PDF para Markdown: o app lê o tamanho da fonte e a posição do texto no PDF para descobrir o que é título, parágrafo, lista ou tabela. Depois gera um Markdown limpo com essa estrutura preservada.',
       p2:
-        'O caminho reverso renderiza Markdown como HTML, aplica um CSS de tema e usa Playwright para imprimir em PDF via Chromium.',
+        'De Markdown para PDF: o app transforma o texto em uma página web estilizada e imprime essa página como PDF usando o mesmo motor dos navegadores. Você escolhe o tema visual antes de converter.',
     },
     limits: {
       title: 'Limites conhecidos',
       items: [
-        'Sem OCR no v1. PDFs escaneados precisam de Tesseract antes.',
-        'Tabelas complexas com células mescladas podem ser achatadas.',
-        'Cabeçalhos e rodapés repetidos são heuristicamente ignorados.',
+        'PDFs escaneados (imagens de papel, sem texto real) ainda não funcionam. Rode antes uma ferramenta de OCR como o Tesseract.',
+        'Tabelas com células mescladas entre linhas ou colunas podem sair achatadas.',
+        'Cabeçalhos e rodapés que se repetem em todas as páginas são removidos automaticamente.',
       ],
     },
     more: {
-      title: 'Mais detalhes',
+      title: 'Feito com',
       body:
-        'Veja REFERENCE.md em packages/pdf-to-markdown/ para os bastidores da heurística, e docs/API.md para o passo a passo da REST.',
+        'Python e FastAPI no servidor (a parte que faz a conversão de verdade), React na página que você está vendo, e um navegador Chromium em modo headless para gerar os PDFs. Tudo é open source e vem junto com o projeto.',
     },
   },
   dropzone: {
     dropFile: (label) => `Solte um ${label}`,
+    dropFiles: (label) => `Solte arquivos ${label} ou uma pasta`,
     orClick: 'ou clique para selecionar',
+    orClickMany: 'ou clique para escolher arquivos',
     sizeHint: (size) => `${size} · clique para trocar`,
     invalidType: (label) => `Tipo inválido. Esperado ${label}.`,
+    someInvalid: (count, label) =>
+      `${count} arquivo${count === 1 ? '' : 's'} ignorado${count === 1 ? '' : 's'}: não é ${label}.`,
     ariaLabel: (label) => `Solte um arquivo ${label} ou clique para escolher`,
+  },
+  batch: {
+    heading: (count) => `${count} arquivo${count === 1 ? '' : 's'} na fila`,
+    statusQueued: 'Na fila',
+    statusConverting: 'Convertendo',
+    statusDone: 'Pronto',
+    statusError: 'Erro',
+    progress: (done, total) => `${done} de ${total} concluído${total === 1 ? '' : 's'}`,
+    convertAll: 'Converter todos',
+    downloadAll: 'Baixar todos (.zip)',
+    clear: 'Limpar lista',
+    pdfBundleName: 'pdfs.zip',
+    mdBundleName: 'markdown.zip',
   },
   diag: {
     title: 'Diagnóstico do PDF',

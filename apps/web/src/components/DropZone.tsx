@@ -5,9 +5,15 @@ import './DropZone.css'
 interface DropZoneProps {
   accept: string
   acceptLabel: string
-  onFile: (file: File) => void
+  /**
+   * Called with the list of files the user dropped or selected. Always
+   * receives an array, so callers can choose between single-file and batch
+   * UIs based on its length.
+   */
+  onFiles: (files: File[]) => void
   disabled?: boolean
-  file?: File | null
+  /** When true, the input accepts more than one file at once. */
+  multiple?: boolean
 }
 
 function matchesAccept(file: File, accept: string): boolean {
@@ -24,36 +30,101 @@ function matchesAccept(file: File, accept: string): boolean {
   })
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+/**
+ * Walk a folder dropped via the DataTransfer API and flatten it into a
+ * `File[]`. Falls back to a flat file list when the folder API is missing.
+ */
+async function readDroppedFiles(items: DataTransferItemList | null, fallback: FileList | null): Promise<File[]> {
+  if (!items || items.length === 0) {
+    return fallback ? Array.from(fallback) : []
+  }
+  const out: File[] = []
+  const walkers: Promise<void>[] = []
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.kind !== 'file') continue
+    const entry = (item as unknown as { webkitGetAsEntry?: () => FileSystemEntry | null }).webkitGetAsEntry?.()
+    if (entry) {
+      walkers.push(walkEntry(entry, out))
+    } else {
+      const file = item.getAsFile()
+      if (file) out.push(file)
+    }
+  }
+  await Promise.all(walkers)
+  return out
 }
 
-export function DropZone({ accept, acceptLabel, onFile, disabled = false, file }: DropZoneProps) {
+async function walkEntry(entry: FileSystemEntry, out: File[]): Promise<void> {
+  if (entry.isFile) {
+    const fileEntry = entry as FileSystemFileEntry
+    await new Promise<void>((resolve) => {
+      fileEntry.file(
+        (file) => {
+          out.push(file)
+          resolve()
+        },
+        () => resolve(),
+      )
+    })
+    return
+  }
+  if (entry.isDirectory) {
+    const dirEntry = entry as FileSystemDirectoryEntry
+    const reader = dirEntry.createReader()
+    const readBatch = (): Promise<FileSystemEntry[]> =>
+      new Promise((resolve) => {
+        reader.readEntries(
+          (entries) => resolve(entries),
+          () => resolve([]),
+        )
+      })
+    let batch = await readBatch()
+    while (batch.length > 0) {
+      for (const child of batch) {
+        await walkEntry(child, out)
+      }
+      batch = await readBatch()
+    }
+  }
+}
+
+export function DropZone({
+  accept,
+  acceptLabel,
+  onFiles,
+  disabled = false,
+  multiple = false,
+}: DropZoneProps) {
   const { t } = useTranslation()
   const [over, setOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleFile = useCallback(
-    (selected: File) => {
-      if (!matchesAccept(selected, accept)) {
+  const handleFiles = useCallback(
+    (selected: File[]) => {
+      const valid = selected.filter((f) => matchesAccept(f, accept))
+      const rejected = selected.length - valid.length
+      if (valid.length === 0) {
         setError(t.dropzone.invalidType(acceptLabel))
         return
       }
-      setError(null)
-      onFile(selected)
+      setError(rejected > 0 ? t.dropzone.someInvalid(rejected, acceptLabel) : null)
+      onFiles(valid)
     },
-    [accept, acceptLabel, onFile, t.dropzone],
+    [accept, acceptLabel, onFiles, t.dropzone],
   )
 
-  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+  const onDrop = async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setOver(false)
     if (disabled) return
-    const f = event.dataTransfer.files?.[0]
-    if (f) handleFile(f)
+    const files = await readDroppedFiles(
+      event.dataTransfer.items,
+      event.dataTransfer.files,
+    )
+    if (files.length === 0) return
+    handleFiles(multiple ? files : files.slice(0, 1))
   }
 
   const onDragOver = (event: DragEvent<HTMLDivElement>) => {
@@ -88,24 +159,20 @@ export function DropZone({ accept, acceptLabel, onFile, disabled = false, file }
         accept={accept}
         className="dropzone__input"
         disabled={disabled}
+        multiple={multiple}
         onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) handleFile(f)
+          const list = e.target.files ? Array.from(e.target.files) : []
+          if (list.length > 0) handleFiles(list)
           e.target.value = ''
         }}
       />
       <div className="dropzone__inner">
-        {file ? (
-          <>
-            <strong className="dropzone__name">{file.name}</strong>
-            <span className="dropzone__hint">{t.dropzone.sizeHint(formatSize(file.size))}</span>
-          </>
-        ) : (
-          <>
-            <strong className="dropzone__name">{t.dropzone.dropFile(acceptLabel)}</strong>
-            <span className="dropzone__hint">{t.dropzone.orClick}</span>
-          </>
-        )}
+        <strong className="dropzone__name">
+          {multiple ? t.dropzone.dropFiles(acceptLabel) : t.dropzone.dropFile(acceptLabel)}
+        </strong>
+        <span className="dropzone__hint">
+          {multiple ? t.dropzone.orClickMany : t.dropzone.orClick}
+        </span>
         {error && (
           <span className="dropzone__error" role="alert">
             {error}
