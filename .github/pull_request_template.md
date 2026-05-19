@@ -1,9 +1,12 @@
 <!--
-Thanks for sending a pull request. A few notes:
+Thanks for sending a pull request. A few notes before you submit:
 
-- Small, focused PRs land faster than sprawling ones.
-- Tests at the lowest viable tier are expected for every behavior change.
-- See CONTRIBUTING.md for code style and the no-business-mocks policy.
+- Keep this PR small and focused. One logical change per PR.
+- Three commits is the comfortable ceiling for review. Squash on merge is
+  the default, so you do not need to keep many commits.
+- Tests at the lowest viable tier are expected for every behaviour change.
+- See CONTRIBUTING.md for the full rules (no-business-mocks, no-AI-coauthor,
+  test requirements, code style).
 -->
 
 ## Summary
@@ -21,6 +24,14 @@ Thanks for sending a pull request. A few notes:
 - [ ] `npm run test:integration`
 - [ ] `npm run test:e2e` (if the change touches the UI or end-to-end flow)
 - [ ] `npm run build` (if the frontend changed)
+
+## Checklist
+
+- [ ] Tests cover the new behaviour (or the PR description explains why
+      no test was needed).
+- [ ] No new tests silently skip on CI.
+- [ ] No `Co-Authored-By:` AI agent trailers in the commit history.
+- [ ] Commit count is reasonable for review (rule of thumb: at most 3).
 
 ## Screenshots
 

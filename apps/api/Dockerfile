@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# Base image carries Python 3.13 plus Playwright/Chromium and all the system
+# Base image carries Python 3.12+ plus Playwright/Chromium and all the system
 # libraries Chromium needs at runtime. Building from scratch would otherwise
 # require manually installing fonts, libnss3, etc.
 FROM mcr.microsoft.com/playwright/python:v1.60.0-noble

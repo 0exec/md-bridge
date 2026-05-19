@@ -83,26 +83,35 @@ together, and a small React app drives the whole thing from the browser.
 
 You will need:
 
-- Python 3.13
-- Node 20+ and npm 10+
+- Python 3.12 or newer
+- Node 22 and npm 10 or newer
+
+The commands below work the same on macOS, Linux, and Windows once the
+virtual environment is activated. Activate scripts differ by shell:
 
 ```bash
-# 1. Backend: create venv and install dependencies
+# 1. Backend: create the virtual environment
 cd apps/api
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -e ".[dev]"          # Linux/macOS: .venv/bin/python
-.venv/Scripts/python.exe -m playwright install chromium
+
+# Activate it (pick the line for your shell):
+source .venv/bin/activate                   # macOS / Linux / Git Bash
+# .venv\Scripts\Activate.ps1                # Windows PowerShell
+
+# Install the backend and the converter dependencies:
+python -m pip install -e ".[dev]"
+python -m playwright install chromium
 
 # 2. Frontend
 cd ../web
 npm install
 npx playwright install chromium
 
-# 3. Root-level concurrent runner
+# 3. Root-level helper (lets you start API and UI together)
 cd ../..
 npm install
 
-# 4. Boot the dev servers (API on 8000, Vite on 5173)
+# 4. Boot the dev servers: API on port 8000, Vite on port 5173
 npm run dev
 ```
 
@@ -121,6 +130,12 @@ The API listens on `http://localhost:8000` and the web UI on
 `http://localhost:5173`. The web container waits for the API healthcheck
 before starting, so the first call from the browser already has a live
 backend behind it.
+
+The compose stack runs the application, not the test suite. Tests live in
+CI (GitHub Actions, see [`.github/workflows/ci.yml`](.github/workflows/ci.yml))
+and run locally through `npm run test:all`. The healthchecks on each
+container only confirm that the service is reachable, not that it behaves
+correctly.
 
 ## Project layout
 
@@ -158,10 +173,10 @@ npm run build             # writes apps/web/dist/
 ```
 
 For a production API run, drop `--reload` and pin a process manager of your
-choice:
+choice. The command assumes the virtual environment is already activated:
 
 ```bash
-apps/api/.venv/Scripts/python.exe -m uvicorn app.main:app --port 8000 --app-dir apps/api
+python -m uvicorn app.main:app --port 8000 --app-dir apps/api
 ```
 
 ## Testing
@@ -202,10 +217,10 @@ PDF that is representative of the documents users care about. Every test
 runs against this fixture, so there are no silent skips on CI.
 
 Regression snapshots live under `tests/golden/`. After a deliberate change
-to the heuristics, regenerate them with:
+to the heuristics, regenerate them with the virtual environment active:
 
 ```bash
-apps/api/.venv/Scripts/python.exe -m pytest tests/regression --update-golden
+python -m pytest tests/regression --update-golden
 ```
 
 ## API reference
@@ -271,23 +286,18 @@ The header toggle picks the new locale up automatically.
 
 ## Contributing
 
-Issues and pull requests are welcome. The friendliest path for a first
-contribution:
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md)
+for the full guide; the headline rules are:
 
-1. Fork and clone.
-2. Run the full test suite (`npm run test:all`) once to make sure your
-   environment is healthy.
-3. Open a draft PR early. Small, focused changes get merged faster.
-4. Add or update tests for any behavior change. Golden-file changes need
-   a one-line justification in the PR description.
+- Every behaviour change ships with tests at the lowest viable tier.
+- Pull requests stay small and aim for at most three commits.
+- AI assistants are tools, not co-authors: do not add `Co-Authored-By`
+  trailers for them.
+- Use Python 3.12+ idioms and TypeScript strict mode; keep comments for the
+  non-obvious "why".
 
-Code style:
-
-- Backend: Python 3.13 idioms, type hints, narrow `try/except`.
-- Frontend: TypeScript strict, no `any` in shared code, plain CSS with
-  design tokens.
-- Both: no comments that describe *what* the code does, names should
-  carry that. Comments are reserved for *why*.
+If you found a security issue, please follow [SECURITY.md](SECURITY.md)
+instead of opening a public issue.
 
 ## License
 
