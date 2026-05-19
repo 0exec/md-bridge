@@ -3,7 +3,11 @@
 # Base image carries Python 3.12+ plus Playwright/Chromium and all the system
 # libraries Chromium needs at runtime. Building from scratch would otherwise
 # require manually installing fonts, libnss3, etc.
-FROM mcr.microsoft.com/playwright/python:v1.60.0-noble
+
+# ---- Stage 1: base ---------------------------------------------------------
+# Shared between runtime and test targets so dependencies and source are
+# installed exactly once.
+FROM mcr.microsoft.com/playwright/python:v1.60.0-noble AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -17,11 +21,15 @@ COPY apps/api/pyproject.toml /app/apps/api/pyproject.toml
 COPY apps/api/app/__init__.py /app/apps/api/app/__init__.py
 RUN pip install -e /app/apps/api
 
-# Vendored skills the API imports at runtime.
+# Vendored converter packages the API imports at runtime.
 COPY packages /app/packages
 
 # Application source.
 COPY apps/api/app /app/apps/api/app
+
+# ---- Stage 2: runtime (default) -------------------------------------------
+# Lean production image: only runtime dependencies, no tests.
+FROM base AS runtime
 
 EXPOSE 8000
 
@@ -29,3 +37,17 @@ EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "app.main:app", \
      "--host", "0.0.0.0", "--port", "8000", \
      "--app-dir", "/app/apps/api"]
+
+# ---- Stage 3: test ---------------------------------------------------------
+# Adds dev dependencies (pytest, httpx, ruff) and the test trees so the suite
+# can run inside Docker via the compose `test` profile.
+FROM base AS test
+
+RUN pip install -e "/app/apps/api[dev]"
+
+COPY apps/api/tests /app/apps/api/tests
+COPY tests /app/tests
+
+WORKDIR /app
+
+CMD ["python", "-m", "pytest", "apps/api/tests", "tests"]

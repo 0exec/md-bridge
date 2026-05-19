@@ -131,11 +131,24 @@ The API listens on `http://localhost:8000` and the web UI on
 before starting, so the first call from the browser already has a live
 backend behind it.
 
-The compose stack runs the application, not the test suite. Tests live in
-CI (GitHub Actions, see [`.github/workflows/ci.yml`](.github/workflows/ci.yml))
-and run locally through `npm run test:all`. The healthchecks on each
-container only confirm that the service is reachable, not that it behaves
-correctly.
+The compose stack runs the application, not the test suite by default.
+The healthchecks on each container only confirm that the service is
+reachable, not that it behaves correctly.
+
+If you do not have Python or Node installed locally and want to run the
+tests anyway, an opt-in `test` profile spins up ephemeral containers that
+execute pytest and vitest:
+
+```bash
+docker compose --profile test run --rm tests-api   # backend pytest
+docker compose --profile test run --rm tests-web   # frontend vitest
+```
+
+Both containers exit when the suite finishes; nothing keeps running in
+the background. Playwright end-to-end tests are not part of the compose
+profile (they need a real browser session and a running API). They live
+in CI (GitHub Actions, see [`.github/workflows/ci.yml`](.github/workflows/ci.yml))
+and run locally through `npm run test:e2e`.
 
 ## Project layout
 

@@ -1,18 +1,32 @@
 # syntax=docker/dockerfile:1.7
 
-# ---- Stage 1: build the React app ----
-FROM node:22-alpine AS build
+# ---- Stage 1: install dependencies ----------------------------------------
+FROM node:22-alpine AS deps
 WORKDIR /web
 
 # Cache npm deps separately from source changes.
 COPY apps/web/package.json apps/web/package-lock.json /web/
 RUN npm install --no-audit --no-fund --no-progress
 
+# ---- Stage 2: source -------------------------------------------------------
+# Shared by build and test so the source layer is materialized once.
+FROM deps AS source
 COPY apps/web/ /web/
+
+# ---- Stage 3: build the React app -----------------------------------------
+FROM source AS build
 RUN npm run build
 
-# ---- Stage 2: serve the static bundle via nginx ----
-FROM nginx:1.27-alpine
+# ---- Stage 4: test ---------------------------------------------------------
+# Runs vitest (unit + integration) inside Docker via the compose `test`
+# profile. Playwright end-to-end tests are not part of this stage; they need
+# a running backend and a real browser session, so they live in CI and in
+# `npm run test:e2e` locally.
+FROM source AS test
+CMD ["npm", "run", "test"]
+
+# ---- Stage 5: serve the static bundle via nginx (default runtime) ---------
+FROM nginx:1.27-alpine AS runtime
 COPY --from=build /web/dist /usr/share/nginx/html
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 

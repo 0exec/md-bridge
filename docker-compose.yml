@@ -1,10 +1,15 @@
 name: md-bridge
 
+# Services without a `profiles:` key are part of the default profile and
+# start with `docker compose up`. The `tests-api` and `tests-web` services
+# only run when explicitly selected via `--profile test`.
+
 services:
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      target: runtime
     image: md-bridge-api:latest
     container_name: md-bridge-api
     restart: unless-stopped
@@ -23,6 +28,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      target: runtime
     image: md-bridge-web:latest
     container_name: md-bridge-web
     restart: unless-stopped
@@ -31,3 +37,28 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+  # Test runner for the backend pytest suite. Starts on demand:
+  #   docker compose --profile test run --rm tests-api
+  tests-api:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: test
+    image: md-bridge-tests-api:latest
+    container_name: md-bridge-tests-api
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+  # Test runner for the frontend vitest suite (unit + integration). Playwright
+  # end-to-end tests are out of scope here; they live in CI and in
+  # `npm run test:e2e` locally.
+  tests-web:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: test
+    image: md-bridge-tests-web:latest
+    container_name: md-bridge-tests-web
