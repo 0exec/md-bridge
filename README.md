@@ -337,7 +337,7 @@ The header toggle picks the new locale up automatically.
 
 ## Design system
 
-![Roadmap of the md-bridge design system: eight features, eight issues, one coherent system](docs/design/screenshots/roadmap.png)
+![Roadmap of the md-bridge design system: eight features, eight issues, one coherent system](docs/design/screenshots/hero.png)
 
 Every UI change tracks back to a mockup in
 [`docs/design/`](docs/design/). The catalogue is a single self-contained
